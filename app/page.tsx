@@ -2,6 +2,7 @@
 import * as React from "react"
 import { useState } from "react"
 import styles from "./homepage.module.css"
+import { signIn } from "next-auth/react";
 
 interface FormState {
     firstName: string;
@@ -67,19 +68,37 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
     const [form, setForm] = useState({ username: '', password: '' });
     const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
         setErrors({ ...errors, [e.target.name]: undefined });
+        setApiError(null);
     }
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        setApiError(null);
         const validation = validateSignIn(form);
         setErrors(validation);
         if (Object.keys(validation).length === 0) {
-            setIsSubmitted(true);
-            onSuccess();
+            setIsLoading(true);
+            const res = await signIn("credentials", {
+                username: form.username,
+                password: form.password,
+                redirect: false,
+                callbackUrl: "/swipePage",
+            });
+            setIsLoading(false);
+            if (res?.error) {
+                setApiError("Invalid username or password");
+                setIsSubmitted(false);
+            } else if (res?.ok) {
+                setIsSubmitted(true);
+                onSuccess();
+                window.location.href = "/swipePage";
+            }
         } else {
             setIsSubmitted(false);
         }
@@ -113,13 +132,15 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
                 />
                 {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
             </div>
+            {apiError && <p className="text-red-600 text-center text-sm mt-2">{apiError}</p>}
             <button
                 type="submit"
                 className={`${styles.button} ${styles.buttonPrimary}`}
+                disabled={isLoading}
             >
-                Log In
+                {isLoading ? "Logging in..." : "Log In"}
             </button>
-            {isSubmitted && <p className="text-green-600 text-center font-medium mt-2">Signed in successfully!</p>}
+            {isSubmitted && <p className="text-green-600 text-center font-medium mt-2">Logged in successfully!</p>}
         </form>
     );
 }
@@ -133,19 +154,42 @@ function CreateAccountForm({ onSuccess }: { onSuccess: () => void }) {
     });
     const [errors, setErrors] = useState<FormErrors>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
         setErrors({ ...errors, [e.target.name]: undefined });
+        setApiError(null);
     }
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        setApiError(null);
         const validation = validate(form);
         setErrors(validation);
         if (Object.keys(validation).length === 0) {
-            setIsSubmitted(true);
-            onSuccess();
+            setIsLoading(true);
+            try {
+                const res = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(form),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    setApiError(data.error || "Registration failed");
+                    setIsSubmitted(false);
+                } else {
+                    setIsSubmitted(true);
+                    onSuccess();
+                }
+            } catch (err) {
+                setApiError("Network error");
+                setIsSubmitted(false);
+            } finally {
+                setIsLoading(false);
+            }
         } else {
             setIsSubmitted(false);
         }
@@ -205,11 +249,13 @@ function CreateAccountForm({ onSuccess }: { onSuccess: () => void }) {
                 />
                 {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
             </div>
+            {apiError && <p className="text-red-600 text-center text-sm mt-2">{apiError}</p>}
             <button
                 type="submit"
                 className={`${styles.button} ${styles.buttonPrimary}`}
+                disabled={isLoading}
             >
-                Create Account
+                {isLoading ? "Creating..." : "Create Account"}
             </button>
             {isSubmitted && <p className="text-green-600 text-center font-medium mt-2">Account created successfully!</p>}
         </form>
