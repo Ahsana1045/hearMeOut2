@@ -2,18 +2,23 @@ services:
   - type: web
     name: hear-me-out
     env: docker
-    region: oregon # or choose another region
-    plan: starter # or choose another plan
-    healthCheckPath: /
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NEXTAUTH_URL
-        sync: false # This will be set manually in Render dashboard
-      - key: NEXTAUTH_SECRET
-        sync: false # This will be set manually in Render dashboard
       - key: DATABASE_URL
-        value: file:./prisma/dev.db
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+    autoDeploy: true
     disk:
       name: sqlite-data
       mountPath: /app/prisma

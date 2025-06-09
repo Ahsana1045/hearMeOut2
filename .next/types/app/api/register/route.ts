@@ -1,4 +1,4 @@
-// File: /home/zdragonali/projects/hmo/hearMeOut2/app/api/register/route.ts
+// File: C:\Users\theki\OneDrive\Desktop\Ali Ahsan Documents\Coding Projects\hearMeOut2\app\api\register\route.ts
 import * as entry from '../../../../../app/api/register/route.js'
 import type { NextRequest } from 'next/server.js'
 

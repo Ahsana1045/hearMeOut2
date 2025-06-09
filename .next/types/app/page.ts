@@ -1,4 +1,4 @@
-// File: /home/zdragonali/projects/hmo/hearMeOut2/app/page.tsx
+// File: C:\Users\theki\OneDrive\Desktop\Ali Ahsan Documents\Coding Projects\hearMeOut2\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
